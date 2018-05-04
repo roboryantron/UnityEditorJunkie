@@ -14,3 +14,4 @@ public class SearchableEnumDemo : ScriptableObject
     public KeyCode AwesomeKeyCode;
 }
 ```
+![popup image](https://user-images.githubusercontent.com/20144789/39614240-5e844c24-4f3c-11e8-998a-e0fbf969ddd4.gif)
