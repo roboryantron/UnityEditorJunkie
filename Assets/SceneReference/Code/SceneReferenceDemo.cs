@@ -11,6 +11,7 @@ namespace RoboRyanTron.SceneReference
 {
     public class SceneReferenceDemo : MonoBehaviour
     {
-        public SceneReference SceneReference;
+        public SceneReference SceneReferenceA;
+        public SceneReference SceneReferenceB;
     }
 }

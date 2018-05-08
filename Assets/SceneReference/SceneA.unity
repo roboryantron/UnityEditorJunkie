@@ -223,7 +223,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SceneReference:
     Scene: {fileID: 102900000, guid: 17f1892d88e223748be1f25e2857368c, type: 3}
-    SceneName: SceneA 1
+    SceneName: SceneA
+    SceneIndex: 1
 --- !u!4 &1599515867
 Transform:
   m_ObjectHideFlags: 0

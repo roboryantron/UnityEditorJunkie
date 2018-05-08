@@ -7,6 +7,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace RoboRyanTron.SceneReference
 {
@@ -17,10 +18,27 @@ namespace RoboRyanTron.SceneReference
         public UnityEditor.SceneAsset Scene;
 #endif
 
+        [Tooltip("The name of the referenced scene. THis may be used at runtime to load the scene.")]
         public string SceneName;
+
+        public int SceneIndex = -1;
+
+        // TODO: IsAvailable - if it is not null, included in the build and enabled
+        
+        public void LoadScene(LoadSceneMode mode = LoadSceneMode.Single)
+        {
+            // TODO: exception loading the scene if it was not in the build settings
+            SceneManager.LoadScene(SceneName, mode);
+        }
+        
+        public AsyncOperation LoadSceneAsync(LoadSceneMode mode = LoadSceneMode.Single)
+        {
+            return SceneManager.LoadSceneAsync(SceneName, mode);
+        }
         
         public void OnBeforeSerialize()
         {
+            return;
             if (Scene != null)
             {
                 string path = UnityEditor.AssetDatabase.GetAssetPath(Scene);
@@ -29,22 +47,23 @@ namespace RoboRyanTron.SceneReference
                 UnityEditor.EditorBuildSettingsScene[] scenes = 
                     UnityEditor.EditorBuildSettings.scenes;
 
-                int sceneIndex = -1;
                 for (int i = 0; i < scenes.Length; i++)
                 {
                     if (scenes[i].guid.ToString() == guid)
                     {
-                        sceneIndex = i;
+                        if(SceneIndex != i)
+                            SceneIndex = i;
                         if (scenes[i].enabled)
                         {
-                            SceneName = Scene.name;
+                            if (SceneName != Scene.name)
+                                SceneName = Scene.name;
                             return;
                         }
                         break;
                     }
                 }
 
-                if (sceneIndex >= 0)
+                if (SceneIndex >= 0)
                 {
                     bool add = UnityEditor.EditorUtility.DisplayDialog("Scene Not In Build",
                         "You are refencing a scene that is not active the build. Enable it in the build settings now?",
@@ -55,7 +74,7 @@ namespace RoboRyanTron.SceneReference
                             new UnityEditor.EditorBuildSettingsScene[scenes.Length];
                         Array.Copy(scenes, newScenes, scenes.Length);
 
-                        newScenes[sceneIndex].enabled= true;
+                        newScenes[SceneIndex].enabled= true;
                         UnityEditor.EditorBuildSettings.scenes = newScenes;
                     }
                 }
