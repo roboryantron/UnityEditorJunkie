@@ -78,8 +78,8 @@ namespace RoboRyanTron.SearchableEnum.Editor
             /// </summary>
             public struct Entry
             {
-                public int index;
-                public string text;
+                public int Index;
+                public string Text;
             }
             
             /// <summary> All posibile items in the list. </summary>
@@ -127,8 +127,8 @@ namespace RoboRyanTron.SearchableEnum.Editor
                     {
                         Entry entry = new Entry
                         {
-                            index = i,
-                            text = allItems[i]
+                            Index = i,
+                            Text = allItems[i]
                         };
                         if (string.Equals(allItems[i], Filter, StringComparison.CurrentCultureIgnoreCase))
                             Entries.Insert(0, entry);
@@ -297,7 +297,7 @@ namespace RoboRyanTron.SearchableEnum.Editor
                         hoverIndex = i;
                     if (Event.current.type == EventType.MouseDown)
                     {
-                        onSelectionMade(list.Entries[i].index);
+                        onSelectionMade(list.Entries[i].Index);
                         EditorWindow.focusedWindow.Close();
                     }
                 }
@@ -312,7 +312,7 @@ namespace RoboRyanTron.SearchableEnum.Editor
 
         private void DrawRow(Rect rowRect, int i)
         {
-            if (list.Entries[i].index == currentIndex)
+            if (list.Entries[i].Index == currentIndex)
                 DrawBox(rowRect, Color.cyan);
             else if (i == hoverIndex)
                 DrawBox(rowRect, Color.white);
@@ -320,7 +320,7 @@ namespace RoboRyanTron.SearchableEnum.Editor
             Rect labelRect = new Rect(rowRect);
             labelRect.xMin += ROW_INDENT;
 
-            GUI.Label(labelRect, list.Entries[i].text);
+            GUI.Label(labelRect, list.Entries[i].Text);
         }
         
         /// <summary>
@@ -350,7 +350,7 @@ namespace RoboRyanTron.SearchableEnum.Editor
                 {
                     if (hoverIndex >= 0 && hoverIndex < list.Entries.Count)
                     {
-                        onSelectionMade(list.Entries[hoverIndex].index);
+                        onSelectionMade(list.Entries[hoverIndex].Index);
                         EditorWindow.focusedWindow.Close();
                     }
                 }
