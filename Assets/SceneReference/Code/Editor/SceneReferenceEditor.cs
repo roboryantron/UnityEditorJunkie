@@ -7,12 +7,21 @@ namespace RoboRyanTron.SceneReference.Editor
     [CustomPropertyDrawer(typeof(SceneReference))]
     public class SceneReferenceEditor : PropertyDrawer
     {
+        #region -- Constants --------------------------------------------------
+        private const string TOOLTIP_SCENE_MISSING = 
+            "Scene is not in build settings.";
+        
         private const string ERROR_SCENE_MISSING =
             "You are refencing a scene that is not added to the build. Add it to the editor build settings now?";
 
+        private const string TOOLTIP_SCENE_DISABLED = 
+            "Scene is not enebled in build settings.";
+        
         private const string ERROR_SCENE_DISABLED =
             "You are refencing a scene that is not active the build. Enable it in the build settings now?";
-
+        #endregion -- Constants -----------------------------------------------
+        
+        #region -- Privte Variables -------------------------------------------
         private SerializedProperty scene;
         private SerializedProperty sceneName;
         private SerializedProperty sceneIndex;
@@ -21,11 +30,39 @@ namespace RoboRyanTron.SceneReference.Editor
         private string sceneAssetPath;
         private string sceneAssetGUID;
 
-        private GUIContent errorIcon;
+        private GUIContent errorTooltip;
         private GUIStyle errorStyle;
+        #endregion -- Privte Variables ----------------------------------------
         
-        // TODO: draw warning icon if the scene is not in the build or not enabled
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            label = EditorGUI.BeginProperty(position, label, property);
+            position = EditorGUI.PrefixLabel(position, label);
 
+            CacheProperties(property);
+            UpdateSceneState();
+
+            position = DisplayErrorsIfNecessary(position);
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUI.PropertyField(position, scene, GUIContent.none, false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                property.serializedObject.ApplyModifiedProperties();
+                CacheProperties(property);
+                UpdateSceneState();
+                Validate();
+            }
+            
+            EditorGUI.EndProperty();
+        }
+        
+        /// <summary>
+        /// Cache all used properties as local variables so that they can be
+        /// used by other methods. This needs to be called every frame since a
+        /// PropertyDrawer can be reused on different properties.
+        /// </summary>
+        /// <param name="property">Property to search through.</param>
         private void CacheProperties(SerializedProperty property)
         {
             scene = property.FindPropertyRelative("Scene");
@@ -45,30 +82,11 @@ namespace RoboRyanTron.SceneReference.Editor
                 sceneAssetGUID = null;
             }
         }
-        
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-        {
-            label = EditorGUI.BeginProperty(position, label, property);
-            position = EditorGUI.PrefixLabel(position, label);
 
-            CacheProperties(property);
-            UpdateSceneState();
-
-            position = ErrorCheck(position);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUI.PropertyField(position, scene, GUIContent.none, false);
-            if (EditorGUI.EndChangeCheck())
-            {
-                property.serializedObject.ApplyModifiedProperties();
-                CacheProperties(property);
-                UpdateSceneState();
-                Validate();
-            }
-            
-            EditorGUI.EndProperty();
-        }
-
+        /// <summary>
+        /// Updates the scene index and enabled flags of a scene property by
+        /// scanning through the scenes in EditorBuildSettings.
+        /// </summary>
         private void UpdateSceneState()
         {
             if (sceneAsset != null)
@@ -98,44 +116,63 @@ namespace RoboRyanTron.SceneReference.Editor
             }
         }
 
-        private void DisplaySceneErrorPrompt(string message, bool insert)
+        /// <summary>
+        /// Display a popup error message about the selected scene and respond
+        /// to the user choice by either fixing the issue in the build
+        /// settings, doing nothing, or opening the build settings.
+        /// </summary>
+        /// <param name="message">Message to display.</param>
+        private void DisplaySceneErrorPrompt(string message)
         {
             EditorBuildSettingsScene[] scenes = 
                 EditorBuildSettings.scenes;
             
-            int add = EditorUtility.DisplayDialogComplex("Scene Not In Build",
-                message,
-                "Yes", "No", "Open Build Settings");
-            if (add == 0)
+            int choice = EditorUtility.DisplayDialogComplex("Scene Not In Build",
+                message, "Yes", "No", "Open Build Settings");
+            
+            if (choice == 0)
             {
-                int newCount = insert ? scenes.Length + 1 : scenes.Length;
+                int newCount = sceneIndex.intValue < 0 ? 
+                    scenes.Length + 1 : scenes.Length;
                 EditorBuildSettingsScene[] newScenes =
                     new EditorBuildSettingsScene[newCount];
                 Array.Copy(scenes, newScenes, scenes.Length);
 
-                if (insert)
+                if (sceneIndex.intValue < 0)
                 {
                     newScenes[scenes.Length] = new EditorBuildSettingsScene(
                         sceneAssetPath, true);
                     sceneIndex.intValue = scenes.Length;
                 }
                 
-                newScenes[sceneIndex.intValue].enabled= true;
+                newScenes[sceneIndex.intValue].enabled = true;
                 
                 EditorBuildSettings.scenes = newScenes;
             }
-            else if (add == 2)
+            else if (choice == 2)
             {
                 EditorApplication.ExecuteMenuItem("File/Build Settings...");
             }
         }
 
-        private Rect ErrorCheck(Rect position)
+        /// <summary>
+        /// If there is anything wrong with the selected scene, this will
+        /// display an error icon that the user can click on for more info.
+        /// </summary>
+        /// <param name="position">
+        /// Full rect that will be used to draw the property.
+        /// </param>
+        /// <returns>
+        /// The rect that should be used to draw the rest of the property. If
+        /// there are no errors, this is the same as the input position Rect.
+        /// Otherwise, it will be the input rect adjusted to fit the error.
+        /// </returns>
+        private Rect DisplayErrorsIfNecessary(Rect position)
         {
             if (errorStyle == null)
             {
                 errorStyle = "CN EntryErrorIconSmall";
-                errorIcon = new GUIContent("", "error");
+                errorTooltip = new GUIContent("", "error");
             }
 
             if (sceneAsset == null)
@@ -146,26 +183,30 @@ namespace RoboRyanTron.SceneReference.Editor
             
             if (sceneIndex.intValue < 0)
             {
-                errorIcon.tooltip = "Scene is not in build settings.";
+                errorTooltip.tooltip = TOOLTIP_SCENE_MISSING;
                 position.xMin = warningRect.xMax;   
-                if (GUI.Button(warningRect, errorIcon, errorStyle))
+                if (GUI.Button(warningRect, errorTooltip, errorStyle))
                 {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, true);
+                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING);
                 }
             }
             else if (!sceneEnabled.boolValue)
             {
-                errorIcon.tooltip = "Scene is not enabled in build settings.";
+                errorTooltip.tooltip = TOOLTIP_SCENE_DISABLED;
                 position.xMin = warningRect.xMax;
-                if (GUI.Button(warningRect, errorIcon, errorStyle))
+                if (GUI.Button(warningRect, errorTooltip, errorStyle))
                 {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED, false);
+                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED);
                 }
             }
 
             return position;
         }
 
+        /// <summary>
+        /// Validate any new values in the scene property. This will display
+        /// popup errors if there are issues with the current value.
+        /// </summary>
         private void Validate()
         {
             if (sceneAsset != null)
@@ -191,13 +232,9 @@ namespace RoboRyanTron.SceneReference.Editor
                 }
 
                 if (sceneIndex.intValue >= 0)
-                {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED, false);
-                }
+                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED);
                 else
-                {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, true);
-                }
+                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING);
             }
             else
             {
