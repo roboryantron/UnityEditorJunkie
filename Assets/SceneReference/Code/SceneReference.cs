@@ -21,7 +21,11 @@ namespace RoboRyanTron.SceneReference
         [Tooltip("The name of the referenced scene. THis may be used at runtime to load the scene.")]
         public string SceneName;
 
+        // TODO: index and enabled could be put in a cache dictionary on the editor
+        // -1 indicates that it is not in the scene list
         public int SceneIndex = -1;
+
+        public bool SceneEnabled;
 
         // TODO: IsAvailable - if it is not null, included in the build and enabled
         
@@ -38,69 +42,8 @@ namespace RoboRyanTron.SceneReference
         
         public void OnBeforeSerialize()
         {
-            return;
             if (Scene != null)
-            {
-                string path = UnityEditor.AssetDatabase.GetAssetPath(Scene);
-                string guid = UnityEditor.AssetDatabase.AssetPathToGUID(path);
-                
-                UnityEditor.EditorBuildSettingsScene[] scenes = 
-                    UnityEditor.EditorBuildSettings.scenes;
-
-                for (int i = 0; i < scenes.Length; i++)
-                {
-                    if (scenes[i].guid.ToString() == guid)
-                    {
-                        if(SceneIndex != i)
-                            SceneIndex = i;
-                        if (scenes[i].enabled)
-                        {
-                            if (SceneName != Scene.name)
-                                SceneName = Scene.name;
-                            return;
-                        }
-                        break;
-                    }
-                }
-
-                if (SceneIndex >= 0)
-                {
-                    bool add = UnityEditor.EditorUtility.DisplayDialog("Scene Not In Build",
-                        "You are refencing a scene that is not active the build. Enable it in the build settings now?",
-                        "Yes", "No");
-                    if (add)
-                    {
-                        UnityEditor.EditorBuildSettingsScene[] newScenes =
-                            new UnityEditor.EditorBuildSettingsScene[scenes.Length];
-                        Array.Copy(scenes, newScenes, scenes.Length);
-
-                        newScenes[SceneIndex].enabled= true;
-                        UnityEditor.EditorBuildSettings.scenes = newScenes;
-                    }
-                }
-                else
-                {
-                    // If the scene is not in the build settings.
-                    bool add = UnityEditor.EditorUtility.DisplayDialog("Scene Not In Build",
-                        "You are refencing a scene that is not added to the build. Add it to the editor build settings now?",
-                        "Yes", "No");
-                    if (add)
-                    {
-                        UnityEditor.EditorBuildSettingsScene[] newScenes =
-                            new UnityEditor.EditorBuildSettingsScene[scenes.Length + 1];
-                        Array.Copy(scenes, newScenes, scenes.Length);
-
-                        newScenes[scenes.Length] = new UnityEditor.EditorBuildSettingsScene(
-                            path, true);
-
-                        UnityEditor.EditorBuildSettings.scenes = newScenes;
-                    }
-                }
-            }
-            else
-            {
-                SceneName = "";
-            }
+                SceneName = Scene.name;
         }
 
         public void OnAfterDeserialize() {}

@@ -7,70 +7,86 @@ namespace RoboRyanTron.SceneReference.Editor
     [CustomPropertyDrawer(typeof(SceneReference))]
     public class SceneReferenceEditor : PropertyDrawer
     {
+        private const string ERROR_SCENE_MISSING =
+            "You are refencing a scene that is not added to the build. Add it to the editor build settings now?";
+
+        private const string ERROR_SCENE_DISABLED =
+            "You are refencing a scene that is not active the build. Enable it in the build settings now?";
+
+        private SerializedProperty scene;
+        private SerializedProperty sceneName;
+        private SerializedProperty sceneIndex;
+        private SerializedProperty sceneEnabled;
+        private SceneAsset sceneAsset;
+        private string sceneAssetPath;
+        private string sceneAssetGUID;
+
+        private GUIContent errorIcon;
+        private GUIStyle errorStyle;
+        
         // TODO: draw warning icon if the scene is not in the build or not enabled
+
+        private void CacheProperties(SerializedProperty property)
+        {
+            scene = property.FindPropertyRelative("Scene");
+            sceneName = property.FindPropertyRelative("SceneName");
+            sceneIndex = property.FindPropertyRelative("SceneIndex");
+            sceneEnabled = property.FindPropertyRelative("SceneEnabled");
+            sceneAsset = scene.objectReferenceValue as SceneAsset;
+
+            if (sceneAsset != null)
+            {
+                sceneAssetPath = AssetDatabase.GetAssetPath(scene.objectReferenceValue);
+                sceneAssetGUID = AssetDatabase.AssetPathToGUID(sceneAssetPath);
+            }
+            else
+            {
+                sceneAssetPath = null;
+                sceneAssetGUID = null;
+            }
+        }
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             label = EditorGUI.BeginProperty(position, label, property);
             position = EditorGUI.PrefixLabel(position, label);
 
-            SerializedProperty scene = property.FindPropertyRelative("Scene");
-            SerializedProperty sceneName = property.FindPropertyRelative("SceneName");
-            SerializedProperty sceneIndex = property.FindPropertyRelative("SceneIndex");
-            SceneAsset sceneAsset = scene.objectReferenceValue as SceneAsset;
-            
-            UpdateCache(scene, sceneName, sceneIndex);
+            CacheProperties(property);
+            UpdateSceneState();
 
-            if (sceneAsset != null && sceneIndex.intValue < 0)
-            {
-                Rect warningRect = new Rect(position);
-                
-                GUIStyle errorStyle = "CN EntryErrorIconSmall";
-                warningRect.width = errorStyle.fixedWidth + 4;
-                position.xMin = warningRect.xMax;
-                GUIContent content = new GUIContent("", "error");
-                if (GUI.Button(warningRect, content, errorStyle))
-                {
-                    string path = AssetDatabase.GetAssetPath(scene.objectReferenceValue);
-                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, sceneIndex, path, true);
-                }
-                //GUI.Label(position, TYPE_ERROR);
-            }
+            position = ErrorCheck(position);
 
             EditorGUI.BeginChangeCheck();
             EditorGUI.PropertyField(position, scene, GUIContent.none, false);
             if (EditorGUI.EndChangeCheck())
             {
                 property.serializedObject.ApplyModifiedProperties();
-                Validate(property);
+                CacheProperties(property);
+                UpdateSceneState();
+                Validate();
             }
             
             EditorGUI.EndProperty();
         }
 
-        private void UpdateCache(SerializedProperty scene, SerializedProperty sceneName, SerializedProperty sceneIndex)
+        private void UpdateSceneState()
         {
-            SceneAsset sceneAsset = scene.objectReferenceValue as SceneAsset;
-            
             if (sceneAsset != null)
             {
-                string path = AssetDatabase.GetAssetPath(scene.objectReferenceValue);
-                string guid = AssetDatabase.AssetPathToGUID(path);
-                
                 EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
 
                 sceneIndex.intValue = -1;
                 for (int i = 0; i < scenes.Length; i++)
                 {
-                    if (scenes[i].guid.ToString() == guid)
+                    if (scenes[i].guid.ToString() == sceneAssetGUID)
                     {
                         if(sceneIndex.intValue != i)
                             sceneIndex.intValue = i;
+                        sceneEnabled.boolValue = scenes[i].enabled;
                         if (scenes[i].enabled)
                         {
                             if (sceneName.stringValue != sceneAsset.name)
                                 sceneName.stringValue = sceneAsset.name;
-                            return;
                         }
                         break;
                     }
@@ -82,8 +98,7 @@ namespace RoboRyanTron.SceneReference.Editor
             }
         }
 
-
-        public void DisplaySceneErrorPrompt(string message, SerializedProperty sceneIndex, string path, bool insert)
+        private void DisplaySceneErrorPrompt(string message, bool insert)
         {
             EditorBuildSettingsScene[] scenes = 
                 EditorBuildSettings.scenes;
@@ -101,7 +116,7 @@ namespace RoboRyanTron.SceneReference.Editor
                 if (insert)
                 {
                     newScenes[scenes.Length] = new EditorBuildSettingsScene(
-                        path, true);
+                        sceneAssetPath, true);
                     sceneIndex.intValue = scenes.Length;
                 }
                 
@@ -114,39 +129,54 @@ namespace RoboRyanTron.SceneReference.Editor
                 EditorApplication.ExecuteMenuItem("File/Build Settings...");
             }
         }
-        
-        public class SceneErrorPrompt
+
+        private Rect ErrorCheck(Rect position)
         {
+            if (errorStyle == null)
+            {
+                errorStyle = "CN EntryErrorIconSmall";
+                errorIcon = new GUIContent("", "error");
+            }
+
+            if (sceneAsset == null)
+                return position;
             
+            Rect warningRect = new Rect(position);
+            warningRect.width = errorStyle.fixedWidth + 4;
+            
+            if (sceneIndex.intValue < 0)
+            {
+                errorIcon.tooltip = "Scene is not in build settings.";
+                position.xMin = warningRect.xMax;   
+                if (GUI.Button(warningRect, errorIcon, errorStyle))
+                {
+                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, true);
+                }
+            }
+            else if (!sceneEnabled.boolValue)
+            {
+                errorIcon.tooltip = "Scene is not enabled in build settings.";
+                position.xMin = warningRect.xMax;
+                if (GUI.Button(warningRect, errorIcon, errorStyle))
+                {
+                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED, false);
+                }
+            }
+
+            return position;
         }
 
-        private const string ERROR_SCENE_MISSING =
-            "You are refencing a scene that is not added to the build. Add it to the editor build settings now?";
-
-        private const string ERROR_SCENE_DISABLED =
-            "You are refencing a scene that is not active the build. Enable it in the build settings now?";
-        
-        public void Validate(SerializedProperty property)
+        private void Validate()
         {
-            SerializedProperty scene = property.FindPropertyRelative("Scene");
-            SerializedProperty sceneName = property.FindPropertyRelative("SceneName");
-            SerializedProperty sceneIndex = property.FindPropertyRelative("SceneIndex");
-            
-            SceneAsset sceneAsset = scene.objectReferenceValue as SceneAsset;
-            
             if (sceneAsset != null)
             {
-                
-                string path = AssetDatabase.GetAssetPath(scene.objectReferenceValue);
-                string guid = AssetDatabase.AssetPathToGUID(path);
-                
                 EditorBuildSettingsScene[] scenes = 
                     EditorBuildSettings.scenes;
 
                 sceneIndex.intValue = -1;
                 for (int i = 0; i < scenes.Length; i++)
                 {
-                    if (scenes[i].guid.ToString() == guid)
+                    if (scenes[i].guid.ToString() == sceneAssetGUID)
                     {
                         if(sceneIndex.intValue != i)
                             sceneIndex.intValue = i;
@@ -162,11 +192,11 @@ namespace RoboRyanTron.SceneReference.Editor
 
                 if (sceneIndex.intValue >= 0)
                 {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED, sceneIndex, path, false);
+                    DisplaySceneErrorPrompt(ERROR_SCENE_DISABLED, false);
                 }
                 else
                 {
-                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, sceneIndex, path, true);
+                    DisplaySceneErrorPrompt(ERROR_SCENE_MISSING, true);
                 }
             }
             else
