@@ -66,14 +66,10 @@ namespace RoboRyanTron.SceneReference
                 {
                     if (scenes[i].guid.ToString() == sceneAssetGUID)
                     {
-                        if(sceneIndex != i)
-                            sceneIndex = i;
+                        sceneIndex = i;
                         sceneEnabled = scenes[i].enabled;
                         if (scenes[i].enabled)
-                        {
-                            if (SceneName != Scene.name)
-                                SceneName = Scene.name;
-                        }
+                            SceneName = Scene.name;
                         break;
                     }
                 }
