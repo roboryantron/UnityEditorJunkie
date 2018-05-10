@@ -9,6 +9,10 @@ using UnityEngine;
 
 namespace RoboRyanTron.SceneReference.Editor
 {
+    /// <summary>
+    /// Editor for a scene reference that can display error prompts and offer
+    /// solutions when the scene is not valid.
+    /// </summary>
     [CustomPropertyDrawer(typeof(SceneReference))]
     public class SceneReferenceEditor : PropertyDrawer
     {

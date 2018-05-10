@@ -9,9 +9,19 @@ using UnityEngine.SceneManagement;
 
 namespace RoboRyanTron.SceneReference
 {
+    /// <summary>
+    /// Class used to serialize a reference to a scene asset that can be used
+    /// at runtime in a build, when the asset can no longer be directly
+    /// referenced. This caches the scene name based on the SceneAsset to use
+    /// at runtime to load.
+    /// </summary>
     [Serializable]
     public class SceneReference : ISerializationCallbackReceiver
     {
+        /// <summary>
+        /// Exception that is raised when there is an issue resolving and
+        /// loading a scene reference.
+        /// </summary>
         public class SceneLoadException : Exception
         {
             public SceneLoadException(string message) : base(message)
@@ -22,7 +32,7 @@ namespace RoboRyanTron.SceneReference
         public UnityEditor.SceneAsset Scene;
 #endif
 
-        [Tooltip("The name of the referenced scene. THis may be used at runtime to load the scene.")]
+        [Tooltip("The name of the referenced scene. This may be used at runtime to load the scene.")]
         public string SceneName;
 
         [SerializeField]
@@ -52,7 +62,6 @@ namespace RoboRyanTron.SceneReference
         public void OnBeforeSerialize()
         {
 #if UNITY_EDITOR
-
             if (Scene != null)
             {
                 string sceneAssetPath = UnityEditor.AssetDatabase.GetAssetPath(Scene);
