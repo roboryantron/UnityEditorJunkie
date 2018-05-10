@@ -1,6 +1,4 @@
-﻿// ----------------------------------------------------------------------------
-// Copyright © 2018 Schell Games, LLC. All Rights Reserved. 
-// 
+﻿// ---------------------------------------------------------------------------- 
 // Author: Ryan Hipple
 // Date:   05/07/2018
 // ----------------------------------------------------------------------------
@@ -14,6 +12,12 @@ namespace RoboRyanTron.SceneReference
     [Serializable]
     public class SceneReference : ISerializationCallbackReceiver
     {
+        public class SceneLoadException : Exception
+        {
+            public SceneLoadException(string message) : base(message)
+            {}
+        }
+        
 #if UNITY_EDITOR
         public UnityEditor.SceneAsset Scene;
 #endif
@@ -21,29 +25,64 @@ namespace RoboRyanTron.SceneReference
         [Tooltip("The name of the referenced scene. THis may be used at runtime to load the scene.")]
         public string SceneName;
 
-        // TODO: index and enabled could be put in a cache dictionary on the editor
-        // -1 indicates that it is not in the scene list
-        public int SceneIndex = -1;
+        [SerializeField]
+        private int sceneIndex = -1;
 
-        public bool SceneEnabled;
+        [SerializeField]
+        private bool sceneEnabled;
 
-        // TODO: IsAvailable - if it is not null, included in the build and enabled
+        private void ValidateScene()
+        {
+            if (string.IsNullOrEmpty(SceneName))
+                throw new SceneLoadException("No scene specified.");
+            
+            if (sceneIndex < 0)
+                throw new SceneLoadException("Scene " + SceneName + " is not in the build settings");
+            
+            if (!sceneEnabled)
+                throw new SceneLoadException("Scene " + SceneName + " is not enabled in the build settings");
+        }
         
         public void LoadScene(LoadSceneMode mode = LoadSceneMode.Single)
         {
-            // TODO: exception loading the scene if it was not in the build settings
+            ValidateScene();
             SceneManager.LoadScene(SceneName, mode);
-        }
-        
-        public AsyncOperation LoadSceneAsync(LoadSceneMode mode = LoadSceneMode.Single)
-        {
-            return SceneManager.LoadSceneAsync(SceneName, mode);
         }
         
         public void OnBeforeSerialize()
         {
+#if UNITY_EDITOR
+
             if (Scene != null)
-                SceneName = Scene.name;
+            {
+                string sceneAssetPath = UnityEditor.AssetDatabase.GetAssetPath(Scene);
+                string sceneAssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(sceneAssetPath);
+                
+                UnityEditor.EditorBuildSettingsScene[] scenes = 
+                    UnityEditor.EditorBuildSettings.scenes;
+
+                sceneIndex = -1;
+                for (int i = 0; i < scenes.Length; i++)
+                {
+                    if (scenes[i].guid.ToString() == sceneAssetGUID)
+                    {
+                        if(sceneIndex != i)
+                            sceneIndex = i;
+                        sceneEnabled = scenes[i].enabled;
+                        if (scenes[i].enabled)
+                        {
+                            if (SceneName != Scene.name)
+                                SceneName = Scene.name;
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                SceneName = "";
+            }
+#endif
         }
 
         public void OnAfterDeserialize() {}

@@ -13,5 +13,15 @@ namespace RoboRyanTron.SceneReference
     {
         public SceneReference SceneReferenceA;
         public SceneReference SceneReferenceB;
+
+        public void LoadSceneA()
+        {
+            SceneReferenceA.LoadScene();
+        }
+        
+        public void LoadSceneB()
+        {
+            SceneReferenceB.LoadScene();
+        }
     }
 }

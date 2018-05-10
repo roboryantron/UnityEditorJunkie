@@ -21,7 +21,7 @@ namespace RoboRyanTron.SceneReference.Editor
             "You are refencing a scene that is not active the build. Enable it in the build settings now?";
         #endregion -- Constants -----------------------------------------------
         
-        #region -- Privte Variables -------------------------------------------
+        #region -- Private Variables ------------------------------------------
         private SerializedProperty scene;
         private SerializedProperty sceneName;
         private SerializedProperty sceneIndex;
@@ -32,7 +32,7 @@ namespace RoboRyanTron.SceneReference.Editor
 
         private GUIContent errorTooltip;
         private GUIStyle errorStyle;
-        #endregion -- Privte Variables ----------------------------------------
+        #endregion -- Private Variables ---------------------------------------
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -67,8 +67,8 @@ namespace RoboRyanTron.SceneReference.Editor
         {
             scene = property.FindPropertyRelative("Scene");
             sceneName = property.FindPropertyRelative("SceneName");
-            sceneIndex = property.FindPropertyRelative("SceneIndex");
-            sceneEnabled = property.FindPropertyRelative("SceneEnabled");
+            sceneIndex = property.FindPropertyRelative("sceneIndex");
+            sceneEnabled = property.FindPropertyRelative("sceneEnabled");
             sceneAsset = scene.objectReferenceValue as SceneAsset;
 
             if (sceneAsset != null)
