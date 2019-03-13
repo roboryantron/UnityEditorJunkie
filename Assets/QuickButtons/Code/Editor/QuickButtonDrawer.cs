@@ -72,33 +72,28 @@ namespace RoboRyanTron.QuickButtons.Editor
             }
             return null;
         }
-
-        private const BindingFlags flags = BindingFlags.IgnoreCase |
-            BindingFlags.Public | BindingFlags.NonPublic |
-            BindingFlags.Static | BindingFlags.Instance;
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            // Magic number 15 is reflected from Unity's EditorGUI.cs
+            // "internal static float indent" property
+            
+            position.xMin += EditorGUI.indentLevel * 15;
+
             if (GUI.Button(position, label))
             {
                 QuickButton button = GetObjectForProperty(property) as QuickButton;
-                object target = GetObjectForProperty(property, -1);
-                if (target == null) target = property.serializedObject.targetObject;
+                if (button == null)
+                {
+                    Debug.LogError("Unable to resolve QuickButton from property " + property.propertyPath);
+                    return;
+                }
                 
-                Type t = target.GetType();
+                object target = GetObjectForProperty(property, -1) ?? 
+                    property.serializedObject.targetObject;
 
-                if (button.action == null)
-                {
-                    string functionName = button.function;
-                    MethodInfo method = t.GetMethod(functionName, flags);
-                    method.Invoke(target, button.args);
-                }
-                else
-                {
-                    button.action.Invoke(target);
-                }
+                button.Invoke(target);
             }
         }
-        
     }
 }

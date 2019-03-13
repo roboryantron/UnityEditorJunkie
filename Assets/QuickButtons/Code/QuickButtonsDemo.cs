@@ -16,9 +16,16 @@ namespace RoboRyanTron.QuickButtons
         [Serializable]
         public class Nested
         {
-            private const Nested template = null;
-            [SerializeField] private QuickButton DemoButton = 
-                new QuickButton(nameof(template.NestedBloop), "doip");
+            public int y = 66;
+            
+            [SerializeField] private QuickButton NestedButton = 
+                new QuickButton("NestedBloop", "message!");
+            
+            public QuickButton NestedDelegateButton = new QuickButton(input =>
+            {
+                Nested nested = input as Nested;
+                Debug.Log("Test simple " + nested.y);
+            });
             
             private void NestedBloop(string msg)
             {
@@ -26,25 +33,26 @@ namespace RoboRyanTron.QuickButtons
             }
         }
 
+        private const QuickButtonsDemo template = null;
+        
         public int x = 35;
 
         public Nested[] nested;
-        
-        private const QuickButtonsDemo template = null;   
  
-        public QuickButton Button = new QuickButton("Test");
+        public QuickButton SimpleNameButton = new QuickButton("Test");
         
-        //public QuickButton Button2 = new QuickButton(()=>Debug.Log("Test simple"));
-        
-        public QuickButton Button3 = new QuickButton(input =>
+        public QuickButton DelegateButton = new QuickButton(input =>
         {
             QuickButtonsDemo demo = input as QuickButtonsDemo;
             Debug.Log("Test simple " + demo.x);
         });
+        
+        public QuickButton DelegateButtonMinimal = new QuickButton(input =>
+            Debug.Log("Test simple " + (input as QuickButtonsDemo).x));
 
 #if UNITY_EDITOR
         [SerializeField] [UsedImplicitly]
-        private QuickButton DemoButton = 
+        private QuickButton DecoratedButton =
             new QuickButton(nameof(template.Bloop), "derp");
 #endif
 
