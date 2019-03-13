@@ -8,6 +8,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,11 +18,59 @@ namespace RoboRyanTron.QuickButtons.Editor
     public class QuickButtonDrawer : PropertyDrawer
     {
 
-        public static object GetObjectForProperty(SerializedProperty property, int pathOffset = 0)
+        public static object GetObjectForProperty(SerializedProperty property, int pathOffset = 0, bool skipList = true)
+        {
+            const BindingFlags flags = BindingFlags.Instance | 
+                BindingFlags.NonPublic | BindingFlags.Public;
+            
+            Type t = property.serializedObject.targetObject.GetType();
+            object obj = property.serializedObject.targetObject;
+
+            string path = property.propertyPath.Replace(".Array.data[", "[");
+            
+            string[] props = path.Split('.');
+            int end = props.Length - 1 + pathOffset;
+            
+            for (int i = 0; i < props.Length + pathOffset; i++)
+            {
+                string[] nameAndIndex = props[i].Split('[', ']');
+                int arrayIndex = nameAndIndex.Length <= 1 ? -1 :
+                    int.Parse(nameAndIndex[1]);
+                FieldInfo field = t.GetField(nameAndIndex[0], flags);
+                
+                obj = field.GetValue(obj);
+                t = field.FieldType;
+
+                if (!skipList)
+                {
+                    if (i == end)
+                        return obj;
+                }
+                
+                if (arrayIndex >= 0)
+                {
+                    // If this is an arra
+                    IList col = obj as IList;
+                    if (col != null && arrayIndex < col.Count)
+                    {
+                        obj = col[arrayIndex];
+                        t = t.IsArray ? t.GetElementType() : 
+                            col.GetType().GetGenericArguments()[0];
+                    }
+                }
+                
+                if (i == end)
+                    return obj;
+            }
+            return null;
+        }
+        
+        public static object _GetObjectForProperty(SerializedProperty property, int pathOffset = 0)
         {
             Type t = property.serializedObject.targetObject.GetType();
             object obj = property.serializedObject.targetObject;
             string[] props = property.propertyPath.Split('.');
+            int end = props.Length - 1 + pathOffset;
             for (int i = 0; i < props.Length + pathOffset; i++)
             {
                 FieldInfo fi = t.GetField(props[i], BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -39,7 +88,7 @@ namespace RoboRyanTron.QuickButtons.Editor
                             {
                                 obj = obs[index];
 
-                                if (i == props.Length - 1 + pathOffset)
+                                if (i == end)
                                     return obj;
 
                                 t = t.GetElementType();
@@ -52,7 +101,7 @@ namespace RoboRyanTron.QuickButtons.Editor
                             {
                                 obj = col[index];
 
-                                if (i == props.Length - 1 + pathOffset)
+                                if (i == end)
                                     return obj;
 
                                 t = col.GetType().GetGenericArguments()[0];
@@ -64,7 +113,7 @@ namespace RoboRyanTron.QuickButtons.Editor
                 {
                     obj = fi.GetValue(obj);
 
-                    if (i == props.Length - 1 + pathOffset)
+                    if (i == end)
                         return obj;
 
                     t = fi.FieldType;
