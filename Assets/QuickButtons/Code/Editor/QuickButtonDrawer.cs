@@ -8,7 +8,6 @@
 using System;
 using System.Collections;
 using System.Reflection;
-using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,7 +16,6 @@ namespace RoboRyanTron.QuickButtons.Editor
     [CustomPropertyDrawer(typeof(QuickButton))]
     public class QuickButtonDrawer : PropertyDrawer
     {
-
         public static object GetObjectForProperty(SerializedProperty property, int pathOffset = 0, bool skipList = true)
         {
             const BindingFlags flags = BindingFlags.Instance | 
@@ -61,63 +59,6 @@ namespace RoboRyanTron.QuickButtons.Editor
                 
                 if (i == end)
                     return obj;
-            }
-            return null;
-        }
-        
-        public static object _GetObjectForProperty(SerializedProperty property, int pathOffset = 0)
-        {
-            Type t = property.serializedObject.targetObject.GetType();
-            object obj = property.serializedObject.targetObject;
-            string[] props = property.propertyPath.Split('.');
-            int end = props.Length - 1 + pathOffset;
-            for (int i = 0; i < props.Length + pathOffset; i++)
-            {
-                FieldInfo fi = t.GetField(props[i], BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                if (fi == null)
-                {
-                    if (props[i] == "Array")
-                        continue;
-                    if (props[i].Contains("["))
-                    {
-                        int index = int.Parse(props[i].Replace("data[", "").Replace("]", ""));
-                        object[] obs = obj as object[];
-                        if (obs != null)
-                        {
-                            if (index < obs.Length)
-                            {
-                                obj = obs[index];
-
-                                if (i == end)
-                                    return obj;
-
-                                t = t.GetElementType();
-                            }
-                        }
-                        else
-                        {
-                            IList col = obj as IList;
-                            if (col != null && index < col.Count)
-                            {
-                                obj = col[index];
-
-                                if (i == end)
-                                    return obj;
-
-                                t = col.GetType().GetGenericArguments()[0];
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    obj = fi.GetValue(obj);
-
-                    if (i == end)
-                        return obj;
-
-                    t = fi.FieldType;
-                }
             }
             return null;
         }
