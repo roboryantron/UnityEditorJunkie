@@ -232,11 +232,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51c5b4c19adc8cf4da64430a3de09668, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  x: 126
   nested:
-  - {}
-  - {}
-  - {}
+    DeeperNested: {}
+    Message: some data
+  nested2:
+  - DeeperNested: {}
+    Message: more data
 --- !u!4 &2090248836
 Transform:
   m_ObjectHideFlags: 0

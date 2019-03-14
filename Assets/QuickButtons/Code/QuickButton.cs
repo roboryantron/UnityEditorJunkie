@@ -1,6 +1,4 @@
-// ----------------------------------------------------------------------------
-// Copyright © 2018 Schell Games, LLC. All Rights Reserved. 
-// 
+// ---------------------------------------------------------------------------- 
 // Author: Ryan Hipple
 // Date:   03/12/2019
 // ----------------------------------------------------------------------------
@@ -11,13 +9,6 @@ using UnityEngine;
 
 namespace RoboRyanTron.QuickButtons
 {
-    
-    // TODO: make a similar component for StringDisplay
-    // calls a function / delegate that returns a string on its source object
-    // drawer displays a "readonly" text field
-    // This can be used to easily display things like properties or more complex
-    // data in the inspector for debugging
-    
     /// <summary>
     /// QuickButtons can be placed in any MonoBehaviour, ScriptableObject,
     /// StateMachineBehaviour or Serializable type to draw a button in the
@@ -30,7 +21,7 @@ namespace RoboRyanTron.QuickButtons
         /// <summary>
         /// Broad set of binding flags used to reflect methods.
         /// </summary>
-        private const BindingFlags flags = BindingFlags.IgnoreCase |
+        private const BindingFlags FLAGS = BindingFlags.IgnoreCase |
             BindingFlags.Public | BindingFlags.NonPublic |
             BindingFlags.Static | BindingFlags.Instance;
         #endregion -- Constants ------------------------------------------------
@@ -62,6 +53,14 @@ namespace RoboRyanTron.QuickButtons
         #endregion -- Private Variables ----------------------------------------
         
         #region -- Constructors ------------------------------------------------
+        /// <summary>
+        /// Makes a button that will draw in the inspector and invoke the named
+        /// function when clicked.
+        /// </summary>
+        /// <param name="functionName">
+        /// Name of the function to call when clicked.
+        /// </param>
+        /// <param name="functionArgs">List of arguments to pass.</param>
         public QuickButton(string functionName, params object[] functionArgs)
         {
             this.functionName = functionName;
@@ -70,6 +69,14 @@ namespace RoboRyanTron.QuickButtons
             invocation = NameInvoke;
         }
 
+        /// <summary>
+        /// Makes a button that will draw in the inspector and invoke the given
+        /// action when clicked.
+        /// </summary>
+        /// <param name="action">
+        /// Action to call when the button is clicked. The object that
+        /// the button is defined on will be passed in as the argument.
+        /// </param>
         public QuickButton(Action<object> action)
         {
             this.action = action;
@@ -79,6 +86,8 @@ namespace RoboRyanTron.QuickButtons
         #endregion -- Constructors ---------------------------------------------
         
         #region -- Invocation --------------------------------------------------
+        /// <summary> Invoke the button callback. </summary>
+        /// <param name="target">Object that the button is defined on.</param>
         public void Invoke(object target)
         {
             invocation.Invoke(target);
@@ -92,7 +101,7 @@ namespace RoboRyanTron.QuickButtons
         private void NameInvoke(object target)
         {
             Type t = target.GetType();
-            MethodInfo method = t.GetMethod(functionName, flags);
+            MethodInfo method = t.GetMethod(functionName, FLAGS);
             if (method != null)
             {
                 // TODO: error handling for argument length and types. This could handle a target invocation exception.
