@@ -47,8 +47,15 @@ namespace RoboRyanTron.SearchableEnum.Editor
             label = EditorGUI.BeginProperty(position, label, property);
             position = EditorGUI.PrefixLabel(position, id, label);
 
-            GUIContent buttonText = 
-                new GUIContent(property.enumDisplayNames[property.enumValueIndex]);
+            GUIContent buttonText;
+            // If the enum has changed, a blank entry
+            if (property.enumValueIndex < 0 || property.enumValueIndex >= property.enumDisplayNames.Length) {
+                buttonText = new GUIContent();
+            }
+            else {
+                buttonText = new GUIContent(property.enumDisplayNames[property.enumValueIndex]);
+            }
+            
             if (DropdownButton(id, position, buttonText))
             {
                 Action<int> onSelect = i =>
