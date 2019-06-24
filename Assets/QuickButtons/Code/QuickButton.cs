@@ -23,7 +23,8 @@ namespace RoboRyanTron.QuickButtons
         /// </summary>
         private const BindingFlags FLAGS = BindingFlags.IgnoreCase |
             BindingFlags.Public | BindingFlags.NonPublic |
-            BindingFlags.Static | BindingFlags.Instance;
+            BindingFlags.Static | BindingFlags.Instance | 
+            BindingFlags.FlattenHierarchy;
         #endregion -- Constants ------------------------------------------------
         
         #region -- Private Variables -------------------------------------------
@@ -101,7 +102,12 @@ namespace RoboRyanTron.QuickButtons
         private void NameInvoke(object target)
         {
             Type t = target.GetType();
-            MethodInfo method = t.GetMethod(functionName, FLAGS);
+            MethodInfo method = null;
+            while (method == null && t != null)
+            {
+                method = t.GetMethod(functionName, FLAGS);
+                t = t.BaseType;
+            }
             if (method != null)
             {
                 // TODO: error handling for argument length and types. This could handle a target invocation exception.
@@ -109,7 +115,8 @@ namespace RoboRyanTron.QuickButtons
             }
             else
             {
-                Debug.LogError($"Unable to resolve method {functionName} from type {t.Name}");
+                Debug.LogError($"Unable to resolve method {functionName} " +
+                    $"from type {target.GetType().Name}");
             }
         }
         #endregion -- Invocation -----------------------------------------------
