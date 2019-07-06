@@ -54,9 +54,19 @@ namespace RoboRyanTron.QuickButtons.Editor
                 string[] nameAndIndex = props[i].Split('[', ']');
                 int arrayIndex = nameAndIndex.Length <= 1 ? -1 :
                     int.Parse(nameAndIndex[1]);
-                
-                FieldInfo field = t?.GetField(nameAndIndex[0], flags);
-                obj = field?.GetValue(obj);
+
+                // Search in base classes to resolve private types
+                Type currentType = t;
+                FieldInfo field = null;
+                while (field == null && currentType != null)
+                {
+                    field = currentType.GetField(nameAndIndex[0], flags);
+                    if (field == null)
+                        currentType = currentType.BaseType;
+                    else
+                        obj = field.GetValue(obj);
+                }
+                if (field == null) obj = null;
                 t = field?.FieldType;
 
                 if (!skipList)
