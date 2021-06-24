@@ -58,7 +58,13 @@ namespace RoboRyanTron.SceneReference
             ValidateScene();
             SceneManager.LoadScene(SceneName, mode);
         }
-        
+
+        public AsyncOperation LoadSceneAsync(LoadSceneMode mode = LoadSceneMode.Single)
+        {
+            ValidateScene();
+            return SceneManager.LoadSceneAsync(SceneName, mode);
+        }
+
         public void OnBeforeSerialize()
         {
 #if UNITY_EDITOR
