@@ -1,0 +1,9 @@
+{
+    "name": "roboryantron.unityeditorjunkie.quickbutton",
+    "displayName": "UnityEditorJunkie-QuickButtons",
+    "version": "1.0.0",
+    "unity": "2019.1",
+    "description": "Draw buttons in the inspector without writing any editor code.",
+    "license": "MIT",
+    "dependencies": {}
+}
