@@ -1,0 +1,9 @@
+{
+    "name": "roboryantron.unityeditorjunkie.scenereference",
+    "displayName": "UnityEditorJunkie-SceneReference",
+    "version": "1.0.0",
+    "unity": "2019.1",
+    "description": "Loading a scene in Unity normally requires a string name or index which can easily break. By using a SceneReference on your MonoBehaviour, you can hard reference a scene and get validation features.",
+    "license": "MIT",
+    "dependencies": {}
+}

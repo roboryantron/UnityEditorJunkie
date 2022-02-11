@@ -1,0 +1,9 @@
+{
+    "name": "roboryantron.unityeditorjunkie.searchableenum",
+    "displayName": "UnityEditorJunkie-SearchableEnum",
+    "version": "1.0.0",
+    "unity": "2019.1",
+    "description": "Use the SearchableEnumAttribute on an enum to get an improved enum selector popup.",
+    "license": "MIT",
+    "dependencies": {}
+}
